@@ -2,14 +2,6 @@ import pandas as pd
 
 
 def build_daily_features(df):
-    """Build daily feature vectors for ML from incident data.
-    
-    Input: DataFrame with columns: incident_id, published_at, verified,
-           confidence, relevance_score, online_flag, offline_flag,
-           event_flag, conflict_flag, protest_flag, far_right_flag
-    
-    Output: DataFrame with lag/rolling/temporal features and targets.
-    """
     df = df.copy()
     if df.empty:
         return pd.DataFrame()
@@ -31,7 +23,13 @@ def build_daily_features(df):
         )
         .reset_index()
         .sort_values("day")
+        .reset_index(drop=True)
     )
+
+    daily["day"] = pd.to_datetime(daily["day"]).dt.date.astype(str)
+    daily["weekday"] = pd.to_datetime(daily["day"]).dt.weekday
+    daily["weekend_flag"] = (daily["weekday"] >= 5).astype(int)
+    daily["month"] = pd.to_datetime(daily["day"]).dt.month
 
     for lag in [1, 7, 14, 28]:
         daily[f"lag_{lag}_incidents"] = daily["incidents"].shift(lag).fillna(0)
@@ -43,10 +41,6 @@ def build_daily_features(df):
         daily[f"rolling_{win}_online_share"] = daily["online_share"].rolling(win, min_periods=1).mean()
         daily[f"rolling_{win}_confidence"] = daily["avg_confidence"].rolling(win, min_periods=1).mean()
 
-    daily["weekday"] = pd.to_datetime(daily["day"]).dt.weekday
-    daily["weekend_flag"] = (daily["weekday"] >= 5).astype(int)
-    daily["month"] = pd.to_datetime(daily["day"]).dt.month
-
     daily["target_next_day_incidents"] = daily["incidents"].shift(-1)
     daily["target_next_7_day_incidents"] = daily["incidents"].rolling(7).sum().shift(-7)
     baseline = daily["rolling_7_incidents"].fillna(daily["incidents"].expanding().mean())
@@ -55,12 +49,12 @@ def build_daily_features(df):
     return daily
 
 
-def build_from_sqlite(conn, out_csv='output/features_daily.csv'):
-    df = pd.read_sql_query('SELECT * FROM incidents', conn)
+def build_from_sqlite(conn, out_csv="output/features_daily.csv"):
+    df = pd.read_sql_query("SELECT * FROM incidents", conn)
     feats = build_daily_features(df)
     feats.to_csv(out_csv, index=False)
     return out_csv
 
 
-if __name__ == '__main__':
-    print('feature builder ready')
+if __name__ == "__main__":
+    print("feature builder ready")

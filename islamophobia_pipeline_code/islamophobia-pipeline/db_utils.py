@@ -168,9 +168,12 @@ def refresh_daily_metrics(conn):
         return None
 
     df["day"] = pd.to_datetime(df["published_at"], errors="coerce").dt.date.astype(str)
+    df = df.dropna(subset=["day"])
+
     daily = (
-        df.groupby(["day"])
+        df.groupby(["day", "source_id"], dropna=False)
         .agg(
+            total_items=("incident_id", "count"),
             total_incidents=("incident_id", "count"),
             verified_incidents=("verified", "sum"),
             avg_confidence=("confidence", "mean"),
@@ -179,6 +182,7 @@ def refresh_daily_metrics(conn):
             offline_share=("offline_flag", "mean"),
         )
         .reset_index()
+        .sort_values(["day", "source_id"])
     )
 
     for _, row in daily.iterrows():
@@ -201,17 +205,18 @@ def refresh_daily_metrics(conn):
             """,
             (
                 row["day"],
-                None,
-                int(row["total_incidents"]),
+                row["source_id"],
+                int(row["total_items"]),
                 int(row["total_incidents"]),
                 int(row["verified_incidents"]),
-                float(row["avg_confidence"]),
-                float(row["avg_relevance"]),
-                float(row["online_share"]),
-                float(row["offline_share"]),
+                float(row["avg_confidence"]) if pd.notna(row["avg_confidence"]) else 0.0,
+                float(row["avg_relevance"]) if pd.notna(row["avg_relevance"]) else 0.0,
+                float(row["online_share"]) if pd.notna(row["online_share"]) else 0.0,
+                float(row["offline_share"]) if pd.notna(row["offline_share"]) else 0.0,
                 now_iso(),
             ),
         )
 
     conn.commit()
     return daily
+

@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-Train Poisson + HGBR count models and forecast next-day incidents.
-Replaces the old RandomForest-based train.py.
-Uses: StandardScaler pipeline, is_weekend feature, calibration metrics.
-"""
-
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import PoissonRegressor
@@ -16,31 +10,31 @@ import joblib
 from pathlib import Path
 
 
-FEATURES = ["lag_1", "lag_7", "lag_28", "roll_7", "roll_28", "dow", "month", "day", "is_weekend"]
+FEATURES = [
+    "lag_1_incidents",
+    "lag_7_incidents",
+    "lag_28_incidents",
+    "rolling_7_incidents",
+    "rolling_28_incidents",
+    "weekday",
+    "month",
+    "weekend_flag",
+]
 
 
 def make_features(df):
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
-    for lag in [1, 7, 28]:
-        df[f"lag_{lag}"] = df["incident_count"].shift(lag)
-    df["roll_7"] = df["incident_count"].shift(1).rolling(7).mean()
-    df["roll_28"] = df["incident_count"].shift(1).rolling(28).mean()
-    df["dow"] = df["date"].dt.dayofweek
-    df["month"] = df["date"].dt.month
-    df["day"] = df["date"].dt.day
-    df["is_weekend"] = (df["dow"] >= 5).astype(int)
     return df
 
 
 def fit_models(df):
-    """Train Poisson (scaled) and HGBR models. Returns (df_feat, data, poisson, gbr, metrics_df, feature_cols)."""
     df = make_features(df)
     data = df.dropna(subset=FEATURES + ["incident_count"]).copy()
     X = data[FEATURES]
     y = data["incident_count"].astype(float)
-    split_idx = int(len(data) * 0.8)
+    split_idx = max(1, int(len(data) * 0.8))
     X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
     y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
 
@@ -49,30 +43,49 @@ def fit_models(df):
         ("model", PoissonRegressor(alpha=0.1, max_iter=2000))
     ])
     poisson.fit(X_train, y_train)
-    pred_p = np.clip(poisson.predict(X_test), 0, None)
+
+    if len(X_test):
+        pred_p = np.clip(poisson.predict(X_test), 0, None)
+    else:
+        pred_p = np.array([])
 
     gbr = HistGradientBoostingRegressor(loss="poisson", max_depth=4, learning_rate=0.05, random_state=42)
     gbr.fit(X_train, y_train)
-    pred_g = np.clip(gbr.predict(X_test), 0, None)
 
-    calibration_error = [float(abs(y_test.mean() - pred_p.mean())),
-                         float(abs(y_test.mean() - pred_g.mean()))]
+    if len(X_test):
+        pred_g = np.clip(gbr.predict(X_test), 0, None)
+    else:
+        pred_g = np.array([])
 
-    metrics = pd.DataFrame([
-        {"model": "PoissonRegressor",
-         "mae": mean_absolute_error(y_test, pred_p),
-         "rmse": root_mean_squared_error(y_test, pred_p),
-         "calibration_error": calibration_error[0]},
-        {"model": "HistGradientBoostingRegressor",
-         "mae": mean_absolute_error(y_test, pred_g),
-         "rmse": root_mean_squared_error(y_test, pred_g),
-         "calibration_error": calibration_error[1]},
-    ])
+    if len(X_test):
+        calibration_error = [
+            float(abs(y_test.mean() - pred_p.mean())),
+            float(abs(y_test.mean() - pred_g.mean())),
+        ]
+        metrics = pd.DataFrame([
+            {
+                "model": "PoissonRegressor",
+                "mae": mean_absolute_error(y_test, pred_p),
+                "rmse": root_mean_squared_error(y_test, pred_p),
+                "calibration_error": calibration_error[0],
+            },
+            {
+                "model": "HistGradientBoostingRegressor",
+                "mae": mean_absolute_error(y_test, pred_g),
+                "rmse": root_mean_squared_error(y_test, pred_g),
+                "calibration_error": calibration_error[1],
+            },
+        ])
+    else:
+        metrics = pd.DataFrame([
+            {"model": "PoissonRegressor", "mae": np.nan, "rmse": np.nan, "calibration_error": np.nan},
+            {"model": "HistGradientBoostingRegressor", "mae": np.nan, "rmse": np.nan, "calibration_error": np.nan},
+        ])
+
     return df, data, poisson, gbr, metrics, FEATURES
 
 
 def residual_interval(model, X_train, y_train, X_pred, z=1.28):
-    """Compute forecast with 80% prediction interval from training residuals."""
     preds_train = np.clip(model.predict(X_train), 0, None)
     resid = y_train.values - preds_train
     sigma = float(np.std(resid, ddof=1)) if len(resid) > 1 else 0.0
@@ -81,7 +94,6 @@ def residual_interval(model, X_train, y_train, X_pred, z=1.28):
 
 
 def forecast_next_day(df, model):
-    """Forecast next day's incident count with prediction interval."""
     df = make_features(df)
     data = df.dropna(subset=FEATURES + ["incident_count"]).copy()
     last = df.dropna(subset=FEATURES).iloc[-1]
@@ -94,7 +106,7 @@ def forecast_next_day(df, model):
         "forecast_lower": round(lower, 2),
         "forecast_upper": round(upper, 2),
         "residual_sigma": round(sigma, 3),
-        "basis_date": str(pd.to_datetime(last["date"]).date())
+        "basis_date": str(pd.to_datetime(last["date"]).date()),
     }
 
 
@@ -107,13 +119,12 @@ def run_pipeline(input_csv, output_dir="output"):
 
     df_feat, data, poisson, gbr, metrics, feature_cols = fit_models(df)
 
-    # Persist models
     joblib.dump(poisson, out / "poisson_regressor.joblib")
     joblib.dump(gbr, out / "hist_gbr_poisson.joblib")
     metrics.to_csv(out / "model_metrics.csv", index=False)
 
-    forecast_p = forecast_next_day(df, poisson)
-    forecast_g = forecast_next_day(df, gbr)
+    forecast_p = forecast_next_day(df_feat, poisson)
+    forecast_g = forecast_next_day(df_feat, gbr)
 
     forecast_df = pd.DataFrame([
         {"model": "PoissonRegressor", **forecast_p},
@@ -121,11 +132,14 @@ def run_pipeline(input_csv, output_dir="output"):
     ])
     forecast_df.to_csv(out / "next_day_forecast.csv", index=False)
 
-    # Pick best model (lower MAE)
-    best_idx = metrics["mae"].idxmin()
-    best_model_name = metrics.loc[best_idx, "model"]
-    best_forecast = forecast_p if best_model_name == "PoissonRegressor" else forecast_g
+    valid_metrics = metrics.dropna(subset=["mae"])
+    if valid_metrics.empty:
+        best_model_name = "PoissonRegressor"
+    else:
+        best_idx = valid_metrics["mae"].idxmin()
+        best_model_name = valid_metrics.loc[best_idx, "model"]
 
+    best_forecast = forecast_p if best_model_name == "PoissonRegressor" else forecast_g
     return metrics, forecast_df, best_model_name, best_forecast
 
 
