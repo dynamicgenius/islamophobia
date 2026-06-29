@@ -1,0 +1,15 @@
+# ~/.msmtprc
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        ~/.msmtp.log
+
+account        icloud
+host           smtp.mail.me.com
+port           587
+from           YOUR_EMAIL@icloud.com
+user           YOUR_EMAIL@icloud.com
+password       YOUR_APP_SPECIFIC_PASSWORD
+
+account default : icloud

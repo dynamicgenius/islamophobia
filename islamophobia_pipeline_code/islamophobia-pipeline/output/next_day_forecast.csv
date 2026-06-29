@@ -1,0 +1,3 @@
+model,forecast,forecast_lower,forecast_upper,residual_sigma,basis_date
+PoissonRegressor,72.31,62.97,81.65,7.296,2026-06-27
+HistGradientBoostingRegressor,1.04,0.0,19.84,14.69,2026-06-27

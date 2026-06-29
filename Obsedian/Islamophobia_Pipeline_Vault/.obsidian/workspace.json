@@ -1,0 +1,205 @@
+{
+  "main": {
+    "id": "2f97575f30b53366",
+    "type": "split",
+    "children": [
+      {
+        "id": "0a0d3231dd664a39",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9fc26f5ede0443b8",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a42850ab69281d9d",
+    "type": "split",
+    "children": [
+      {
+        "id": "7576fbc8f1584690",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4d5ed217376652f2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "999723045121eab0",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          },
+          {
+            "id": "d22e6a11cc6b593f",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 497.5
+  },
+  "right": {
+    "id": "f565a9e4407aba50",
+    "type": "split",
+    "children": [
+      {
+        "id": "4b9f23346bad8f60",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "41ec8678a5ed8e4a",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "03_Issues_Checklist.md",
+                "collapseAll": true,
+                "extraContext": false,
+                "sortOrder": "alphabeticalReverse",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for 03_Issues_Checklist"
+            }
+          },
+          {
+            "id": "4737600b60ef19d9",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "04_Fixes.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from 04_Fixes"
+            }
+          },
+          {
+            "id": "2199ab48262b2814",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "1cfc3b780560204e",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "15cc441f6fed6002",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "custom-sort:Toggle custom sorting": false
+    }
+  },
+  "active": "15cc441f6fed6002",
+  "lastOpenFiles": [
+    "00_Index.md",
+    "03_Issues_Checklist.md",
+    "Untitled.base",
+    "08_Deployment_Status.md",
+    "05_Setup/Dependencies.md",
+    "04_Fixes/msmtprc.txt",
+    "04_Fixes/generate_brief.py",
+    "04_Fixes/alerts.py",
+    "05_Setup/Cron_Jobs.md",
+    "04_Fixes_Index.md",
+    "04_Fixes",
+    "02_Architecture.md",
+    "01_Audit_Overview.md",
+    "04_Fixes",
+    "msmtprc.txt",
+    "generate_brief.py",
+    "alerts.py",
+    "05_Setup/Environment_Variables.md",
+    "04_Fixes.md",
+    "06_Testing/Test_Commands.md"
+  ]
+}
